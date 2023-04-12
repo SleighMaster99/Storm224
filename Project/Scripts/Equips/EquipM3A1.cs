@@ -2,13 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.InputSystem;
 
-public class EquipM1Garand : Equip
+public class EquipM3A1 : Equip
 {
     [Header("Gun Components")]
     [SerializeField]
-    private AudioSource audioSource_Clip;       // 클립 소리 재생용 오디오 소스
+    private AudioSource audioSource_Trigger;       // 클립 소리 재생용 오디오 소스
 
     [Header("Fire Effects")]
     [SerializeField]
@@ -25,8 +24,6 @@ public class EquipM1Garand : Equip
     private AudioClip fireSound;                // 발사 소리
     [SerializeField]
     private AudioClip reloadSound;              // 장전 소리
-    [SerializeField]
-    private AudioClip clipSound;                // 클립 소리
     [SerializeField]
     private AudioClip noAmmoSound;              // 총알 없을 때 트리거 소리
 
@@ -54,7 +51,6 @@ public class EquipM1Garand : Equip
     [SerializeField]
     private float cartridgeCaseTime;            // 탄피 풀에 반납 되는 시간
 
-    // Pool
     private ObjectPool<Bullet> bulletPool;
     private ObjectPool<CartridgeCase> cartridgeCasePool;
 
@@ -72,6 +68,7 @@ public class EquipM1Garand : Equip
         cartridgeCasePool = new ObjectPool<CartridgeCase>(CreateCartridgeCase, OnGetCartridgeCase, OnReleaseCartridgeCase, OnDestroyCartridgeCase, maxSize: 50);
     }
 
+    // 무기 장착
     private void OnEnable()
     {
         StartCoroutine("Equipping");
@@ -84,7 +81,6 @@ public class EquipM1Garand : Equip
     private IEnumerator Equipping()
     {
         isShoot = true;
-        isClick = false;
         yield return new WaitForSeconds(1.0f);
         isShoot = CheckReloadedBullet();
     }
@@ -95,10 +91,21 @@ public class EquipM1Garand : Equip
         isClick = !isClick;
 
         // 총알이 없으면 발사시 트리거 소리 재생
-        if(CheckReloadedBullet() && isClick)
-            audioSource_Clip.PlayOneShot(noAmmoSound);
+        if (CheckReloadedBullet() && isClick)
+            audioSource_Trigger.PlayOneShot(noAmmoSound);
+
+
+        if (isClick)
+            StartFireLoop();
+        else
+            StopFireLoop();
         
-        if (!isShoot && isClick)
+    }
+
+    // 실질적 발사 구현
+    private void AutomaticFire()
+    {
+        if (!isShoot)
         {
             isShoot = true;
 
@@ -122,13 +129,23 @@ public class EquipM1Garand : Equip
 
             // 탄피 배출
             StartCoroutine("RemoveCartridgeCase");
-            
-            // 약실에 총알이 없을 때
-            if(reloadedAmmo == 0)
-            {
-                animator.SetTrigger("NoAmmo");
-                audioSource_Clip.PlayOneShot(clipSound);
-            }
+        }
+    }
+
+    // Aoutomatic 발사 시작
+    public void StartFireLoop() => StartCoroutine("FireLoop");
+
+    // Aoutomatic 발사 멈춤
+    public void StopFireLoop() => StopCoroutine("FireLoop");
+
+    // Aoutomatic 발사
+    private IEnumerator FireLoop()
+    {
+        while (true)
+        {
+            AutomaticFire();
+
+            yield return null;
         }
     }
 
@@ -166,7 +183,7 @@ public class EquipM1Garand : Equip
     {
         isAiming = !isAiming;
         animator.SetBool("IsAiming", isAiming);
-        
+
         if (isAiming)
         {
             playerControlable.rotateXSpeed -= rotateXAmount;
@@ -194,13 +211,6 @@ public class EquipM1Garand : Equip
     {
         isShoot = true;
 
-        // 약실에 총알이 있을 때
-        if (reloadedAmmo > 0)
-        {
-            animator.SetTrigger("NoAmmo");
-            audioSource_Clip.PlayOneShot(clipSound);
-        }
-
         animator.SetTrigger("ReloadTrigger");
 
         yield return new WaitForSeconds(reloadTime);
@@ -213,8 +223,6 @@ public class EquipM1Garand : Equip
     }
 
     // 장전된 총알이 있는지 확인
-    // True  : 총알 없음
-    // False : 총알 있음
     private bool CheckReloadedBullet()
     {
         if (reloadedAmmo <= 0)
@@ -222,7 +230,6 @@ public class EquipM1Garand : Equip
         else
             return false;
     }
-
 
     /// <summary>
     /// Pool

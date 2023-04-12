@@ -5,14 +5,14 @@ using UnityEngine.UI;
 
 public class PlayerControlable : Controlable
 {
+    [Header("Components")]
+    [SerializeField]
+    private PlayerUI playerUI;                  // Player UI Script
+
     // 현재 장착 장비
     [Header("Weapon")]
     public EquipManager equipManager;
     public Equip currentEquip;
-    /*
-    public GameObject currentWeapon;
-    public Animator currentWeaponAnimator;
-    */
 
     public Transform cameraSocket;              // 카메라소켓
     public Transform mainCamera;                // 메인 카메라
@@ -40,8 +40,8 @@ public class PlayerControlable : Controlable
     private Vector3 currentVelocity;
 
     // 마우스 움직인 값
-    float rotateX;                              // 마우스 가로 움직임
-    float rotateY;                              // 마우스 세로 움직임
+    private float rotateX;                      // 마우스 가로 움직임
+    private float rotateY;                      // 마우스 세로 움직임
 
     [Header("Stand/Sit/Down")]
     [SerializeField]
@@ -71,15 +71,13 @@ public class PlayerControlable : Controlable
 
     private void Start()
     {
-        // Test
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
         moveSpeed = walkSpeed;
 
         rotateX = 0;
         rotateY = 0;
 
         currentEquip = equipManager.InitializeCurrentEquip();
+        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     private void LateUpdate()
@@ -187,7 +185,7 @@ public class PlayerControlable : Controlable
             return;
         }
 
-        if (isLShiftDown)
+        if (isMove && isLShiftDown)
         {
             isRun = true;
 
@@ -213,6 +211,7 @@ public class PlayerControlable : Controlable
         }
 
         currentEquip.animator.SetBool("IsRun", isRun);
+        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     // 앉기 - C
@@ -234,6 +233,8 @@ public class PlayerControlable : Controlable
             bodyState = PlayerBodyStatus.Stand;
             moveSpeed += decreaseMoveSpeed;
         }
+
+        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     // 엎드리기 - Z
@@ -257,6 +258,8 @@ public class PlayerControlable : Controlable
             capsuleCollider.center = new Vector3(0, standsitCenter, 0);
             this.transform.position += new Vector3(0, 0.2f, 0);
         }
+
+        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     // 재장전 - R
@@ -266,6 +269,47 @@ public class PlayerControlable : Controlable
             return;
 
         currentEquip.Reload();
+    }
+
+    // 커서 On/off - Tab
+    public override void KeyboardTab()
+    {
+        if (isCursor)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        isCursor = !isCursor;
+    }
+
+    // 장비 선택 - 1
+    public override void Keyboard1()
+    {
+        currentEquip = equipManager.CurrentEquipChanger(1);
+    }
+
+    // 장비 선택 - 2
+    public override void Keyboard2()
+    {
+        currentEquip = equipManager.CurrentEquipChanger(2);
+    }
+
+    // 장비 선택 - 3
+    public override void Keyboard3()
+    {
+        currentEquip = equipManager.CurrentEquipChanger(3);
+    }
+
+    // 장비 선택 - 4
+    public override void Keyboard4()
+    {
+        currentEquip = equipManager.CurrentEquipChanger(4);
     }
 
     // 앉기, 서기 기능

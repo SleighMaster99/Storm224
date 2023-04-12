@@ -6,7 +6,7 @@ using UnityEditor;
 public enum EquipType
 {
     Gun,
-    ThrowingWeapon,
+    Grenade,
     UsesItem,
     UniqueAbility
 }
@@ -28,11 +28,16 @@ public abstract class Equip : MonoBehaviour
     public bool isClick;                    // 마우스 좌클릭 여부
 
     [Header("Gun Property")]
-    public FireType fireType;                    // 총기 종류
+    public FireType fireType;               // 총기 종류
+    public int maxAmmo;
+    public int ammo;
+    public int maxReloadedAmmo;
+    public int reloadedAmmo;
 
     [Header("Equip Components")]
     public Animator animator;               // 애니메이터
     public AudioSource audioSource;         // 오디오 소스
+    public PlayerUI playerUI;               // Player UI Script
 
     public abstract void Fire();
     public abstract void Aiming();

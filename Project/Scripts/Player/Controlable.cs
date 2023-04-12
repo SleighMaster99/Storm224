@@ -4,6 +4,8 @@ using UnityEngine;
 
 public abstract class Controlable : MonoBehaviour
 {
+    public bool isCursor = true;               // 마우스 커서 여부
+
     public abstract void Move(Vector2 input);
     public abstract void Rotate(Vector2 input);
     public abstract void Interact();
@@ -13,4 +15,9 @@ public abstract class Controlable : MonoBehaviour
     public abstract void KeyboardC();
     public abstract void KeyboardZ();
     public abstract void KeyboardR();
+    public abstract void KeyboardTab();
+    public abstract void Keyboard1();
+    public abstract void Keyboard2();
+    public abstract void Keyboard3();
+    public abstract void Keyboard4();
 }

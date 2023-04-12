@@ -4,11 +4,12 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.InputSystem;
 
-public class EquipM1Garand : Equip
+
+public class EquipArisaka38 : Equip
 {
     [Header("Gun Components")]
     [SerializeField]
-    private AudioSource audioSource_Clip;       // 클립 소리 재생용 오디오 소스
+    private AudioSource audioSource_Bolt;       // 볼트 장전 소리 재생용 오디오 소스
 
     [Header("Fire Effects")]
     [SerializeField]
@@ -24,9 +25,7 @@ public class EquipM1Garand : Equip
     [SerializeField]
     private AudioClip fireSound;                // 발사 소리
     [SerializeField]
-    private AudioClip reloadSound;              // 장전 소리
-    [SerializeField]
-    private AudioClip clipSound;                // 클립 소리
+    private AudioClip boltReloadSound;          // 볼트 장전 소리
     [SerializeField]
     private AudioClip noAmmoSound;              // 총알 없을 때 트리거 소리
 
@@ -54,9 +53,9 @@ public class EquipM1Garand : Equip
     [SerializeField]
     private float cartridgeCaseTime;            // 탄피 풀에 반납 되는 시간
 
-    // Pool
-    private ObjectPool<Bullet> bulletPool;
-    private ObjectPool<CartridgeCase> cartridgeCasePool;
+    // 오브젝트 풀
+    private ObjectPool<Bullet> bulletPool;                  // Bullet Pool
+    private ObjectPool<CartridgeCase> cartridgeCasePool;    // CartridgeCase Pool
 
     [Header("PlayerControlabe")]
     [SerializeField]
@@ -74,17 +73,16 @@ public class EquipM1Garand : Equip
 
     private void OnEnable()
     {
-        StartCoroutine("Equipping");
+        muzzleEffect.SetActive(false);
         playerUI.InitializeEquipUI(equipName, ammo, reloadedAmmo);
 
-        muzzleEffect.SetActive(false);
+        StartCoroutine("Equipping");
     }
 
     // 무기 장착 중...
     private IEnumerator Equipping()
     {
         isShoot = true;
-        isClick = false;
         yield return new WaitForSeconds(1.0f);
         isShoot = CheckReloadedBullet();
     }
@@ -95,9 +93,9 @@ public class EquipM1Garand : Equip
         isClick = !isClick;
 
         // 총알이 없으면 발사시 트리거 소리 재생
-        if(CheckReloadedBullet() && isClick)
-            audioSource_Clip.PlayOneShot(noAmmoSound);
-        
+        if (CheckReloadedBullet() && isClick)
+            audioSource_Bolt.PlayOneShot(noAmmoSound);
+
         if (!isShoot && isClick)
         {
             isShoot = true;
@@ -109,7 +107,7 @@ public class EquipM1Garand : Equip
             else
                 animator.Play("IdleFire", -1, 0);
 
-            reloadedAmmo--;
+            reloadedAmmo --;
             playerUI.UpdateEquipUI(ammo, reloadedAmmo);
 
             // 총알 풀에서 가져오기
@@ -120,32 +118,31 @@ public class EquipM1Garand : Equip
             // 화염 효과
             StartCoroutine("MuzzleFlash");
 
+            // 볼트 장전 소리
+            StartCoroutine("BoltSound");
+
             // 탄피 배출
             StartCoroutine("RemoveCartridgeCase");
-            
-            // 약실에 총알이 없을 때
-            if(reloadedAmmo == 0)
-            {
-                animator.SetTrigger("NoAmmo");
-                audioSource_Clip.PlayOneShot(clipSound);
-            }
         }
     }
 
     // 화염 효과
     private IEnumerator MuzzleFlash()
     {
-        if (!muzzleEffect.activeSelf)
-            muzzleEffect.SetActive(true);
-        else
-        {
-            muzzleEffect.SetActive(false);
-            muzzleEffect.SetActive(true);
-        }
+        muzzleEffect.SetActive(true);
 
         yield return new WaitForSeconds(fireRate);
 
         isShoot = CheckReloadedBullet();
+        muzzleEffect.SetActive(false);
+    }
+
+    // 볼트 장전 소리
+    private IEnumerator BoltSound()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        audioSource_Bolt.PlayOneShot(boltReloadSound);
     }
 
     // 탄피 배출
@@ -166,7 +163,7 @@ public class EquipM1Garand : Equip
     {
         isAiming = !isAiming;
         animator.SetBool("IsAiming", isAiming);
-        
+
         if (isAiming)
         {
             playerControlable.rotateXSpeed -= rotateXAmount;
@@ -182,9 +179,9 @@ public class EquipM1Garand : Equip
     // 재장전
     public override void Reload()
     {
-        if (ammo <= 0)
+        if(ammo <= 0)
             return;
-
+        
         // 재장전 기능 처리
         StartCoroutine("Reloading");
     }
@@ -193,13 +190,6 @@ public class EquipM1Garand : Equip
     private IEnumerator Reloading()
     {
         isShoot = true;
-
-        // 약실에 총알이 있을 때
-        if (reloadedAmmo > 0)
-        {
-            animator.SetTrigger("NoAmmo");
-            audioSource_Clip.PlayOneShot(clipSound);
-        }
 
         animator.SetTrigger("ReloadTrigger");
 
@@ -213,8 +203,6 @@ public class EquipM1Garand : Equip
     }
 
     // 장전된 총알이 있는지 확인
-    // True  : 총알 없음
-    // False : 총알 있음
     private bool CheckReloadedBullet()
     {
         if (reloadedAmmo <= 0)
@@ -222,7 +210,6 @@ public class EquipM1Garand : Equip
         else
             return false;
     }
-
 
     /// <summary>
     /// Pool
