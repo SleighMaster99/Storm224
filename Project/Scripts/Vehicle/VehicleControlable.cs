@@ -6,8 +6,10 @@ public class VehicleControlable : Controlable
 {
     // public Transform cameraSocket;              // 카메라 소켓
     //public Transform mainCamera;                // 플레이어 시점 카메라
-    public Transform characterSeat;
-    public Transform ridePosition;
+    
+    public Transform[] characterSeat; // 좌석
+    public Transform[] ridePosition; // 하차 위치
+
     Rigidbody rigidbody;
 
     [SerializeField]
@@ -16,18 +18,21 @@ public class VehicleControlable : Controlable
     private GameObject[] wheelMeshes;
 
     public PlayerControlable drivePlayer;
-
-    void Start()
-    {
-
-    }
+    public Transform currentSeat;
 
     // Update is called once per frame
     void Update()
     {
-
+        Debug.Log(currentSeat);
     }
-
+    public override void Keyboard1()
+    {
+        MoveDriverSeat(characterSeat[0]);
+    }
+    public override void Keyboard2()
+    {
+        MoveDriverSeat(characterSeat[1]);
+    }
     public override void KeyboardR()
     {
 
@@ -40,6 +45,7 @@ public class VehicleControlable : Controlable
     {
 
     }
+
     public override void LShift()
     {
 
@@ -55,22 +61,38 @@ public class VehicleControlable : Controlable
     //차량 탑승 상호작용
     public override void Interact()
     {
-        StartCoroutine(GetOut());
+        GetOut();
     }
+    void MoveDriverSeat(Transform seatPosition)
+    {
+        drivePlayer.transform.position = seatPosition.position;
+        drivePlayer.transform.rotation = seatPosition.rotation;
 
-    //차량 하차  
-    private IEnumerator GetOut()
+        currentSeat = seatPosition;
+    }
+    public override void Spacebar()
+    {
+        Break();
+    }
+    public void Break()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            wheelColliders[i].brakeTorque = 2000f / 2;
+        }
+    }
+    //차량 하차 
+    private void GetOut()
     {
         var controller = FindObjectOfType<Controller>();
         var charBody = drivePlayer.GetComponent<Rigidbody>();
         var charCollider = drivePlayer.GetComponent<CapsuleCollider>();
 
-        while(Vector3.Distance(drivePlayer.transform.position, ridePosition.position) > 0.1f)
-        {
-            yield return null;
-            drivePlayer.transform.position += (ridePosition.position - drivePlayer.transform.position).normalized * Time.deltaTime * 10f;
-        }
-
+        if (characterSeat[0] == currentSeat)
+            drivePlayer.transform.position = ridePosition[0].position;
+        else
+            drivePlayer.transform.position = ridePosition[1].position;
+        
         charBody.isKinematic = false;
         charCollider.isTrigger = false;
 
@@ -112,25 +134,30 @@ public class VehicleControlable : Controlable
         }
 
         wheelColliders[0].steerAngle = wheelColliders[1].steerAngle = input.x * 20f;
-        //차량 미끄럼방지
+        
         for (int i = 0; i < 4; i++)
         {
             wheelColliders[i].motorTorque = input.y * (2000f / 4);
         }
-        if (input.y == 0)   // 전진 중이 아닐 때
+
+        if (input.y != 0)   // 전진 중이 아닐 때
         {
             for (int i = 0; i < 4; i++)
             {
-                wheelColliders[i].brakeTorque = 2000f / 2;
+                wheelColliders[i].brakeTorque = 0;
             }
         }
-        else    // 키를 눌렀을 때
+        if (characterSeat[1] == currentSeat)
         {
-            for (int i = 0; i < 4; i++)
-            {
-                wheelColliders[i].brakeTorque = 0; // 브레이크 해제
-            }
+
         }
+        //else    // 키를 눌렀을 때
+        //{
+        //    for (int i = 0; i < 4; i++)
+        //    {
+        //        wheelColliders[i].brakeTorque = 0; // 브레이크 해제
+        //    }
+        //}
     }
 
     //차량 흔들림 방지
@@ -139,6 +166,7 @@ public class VehicleControlable : Controlable
     void AddDownForce()
     {
         rigidbody.AddForce(-transform.up * downForceValue * rigidbody.velocity.magnitude);
+        rigidbody.centerOfMass = new Vector3(0, -1, 0); //차 무게중심 낮추기
     }
 
 
