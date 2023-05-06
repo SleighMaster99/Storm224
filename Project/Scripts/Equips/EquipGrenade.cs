@@ -28,6 +28,10 @@ public class EquipGrenade : Equip
     private float explosionWaitTime;            // 코킹 후 폭발까지 시간
     [SerializeField]
     private float destroyTime;                  // 폭발 후 제거 시간
+    [SerializeField]
+    private string noAmmoMessage;               // 연막탄 없을 때 메세지
+    [SerializeField]
+    private float noAmmoMessageShowingTime;     // 연막탄 없을 때 메세지 보여주는 시간
 
     [Header("Sounds")]
     [SerializeField]
@@ -40,6 +44,13 @@ public class EquipGrenade : Equip
     // 무기 장착
     private void OnEnable()
     {
+        if (reloadedAmmo <= 0)
+        {
+            playerControlable.Keyboard1();
+            playerUI.ShowEquipMessage(noAmmoMessage, noAmmoMessageShowingTime);
+            return;
+        }
+
         StartCoroutine("Equipping");
         playerUI.InitializeEquipUI(equipName, ammo, reloadedAmmo);
     }
@@ -51,16 +62,19 @@ public class EquipGrenade : Equip
         yield return new WaitForSeconds(1.0f);
         isShoot = CheckHasAmmo();
     }
-
+    
     // 무기 변경시
     private void OnDisable()
     {
         if (grenade != null)
-            Destroy(grenade);
+        {
+            Destroy(grenade.gameObject);
+        }
     }
+    
 
     // ThrowReady && Trow
-    public override void Fire()
+    public override void Fire(bool isClose, RaycastHit hit)
     {
         isClick = !isClick;
 
@@ -142,9 +156,19 @@ public class EquipGrenade : Equip
     {
         yield return new WaitForSeconds(1.0f);
 
-        ammo--;
-        reloadedAmmo = maxReloadedAmmo;
-        playerUI.UpdateEquipUI(ammo, reloadedAmmo);
+        grenade = null;
+
+        if (ammo > 0)
+        {
+            ammo--;
+            reloadedAmmo = maxReloadedAmmo;
+            playerUI.UpdateEquipUI(ammo, reloadedAmmo);
+        }
+        else
+        {
+            playerControlable.Keyboard1();
+            isShoot = false;
+        }
     }
 
     // 투척 장비가 있는지 확인

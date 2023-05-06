@@ -9,13 +9,14 @@ public class EquipManager : MonoBehaviour
     public Animator[] armsEquipAnimators;       // 모든 개인 장비 애니메이터
     /// <summary>
     /// index : Equip Name
-    /// 0 : M1 Garand
-    /// 1 : Arisaka 38
-    /// 2 : m3a1
-    /// 3 : MK2
-    /// 4 : M18
-    /// 5 : Morphine
-    /// 6 : Bandage Roll
+    /// 0 : Hand
+    /// 1 : M1 Garand
+    /// 2 : Arisaka 38
+    /// 3 : m3a1
+    /// 4 : MK2
+    /// 5 : M18
+    /// 6 : Morphine
+    /// 7 : Bandage Roll
     /// </summary>
 
     [Header("Current Has Equip")]
@@ -46,69 +47,57 @@ public class EquipManager : MonoBehaviour
     {
         if(num == 1)
         {   // 보병
+            // Hand
+            hasArmsEquip[0] = armsEquip[0];
+            hasArmsEquipAnimators[0] = armsEquipAnimators[0];
+
             // Arisaka 38
-            hasArmsEquip[0] = armsEquip[1];
-            hasArmsEquipAnimators[0] = armsEquipAnimators[1];
+            hasArmsEquip[1] = armsEquip[2];
+            hasArmsEquipAnimators[1] = armsEquipAnimators[2];
 
             // MK2
-            hasArmsEquip[1] = armsEquip[3];
-            hasArmsEquipAnimators[1] = armsEquipAnimators[3];
-
-            // M18
-            hasArmsEquip[1] = armsEquip[3];
-            hasArmsEquipAnimators[1] = armsEquipAnimators[3];
+            hasArmsEquip[2] = armsEquip[4];
+            hasArmsEquipAnimators[2] = armsEquipAnimators[4];
 
             // Morphine
-            hasArmsEquip[2] = armsEquip[5];
-            hasArmsEquipAnimators[2] = armsEquipAnimators[5];
-
-            // Bandage Roll
             hasArmsEquip[3] = armsEquip[6];
             hasArmsEquipAnimators[3] = armsEquipAnimators[6];
         }
         else if (num == 2)
         {   // 공병
-            // M1 Garand
+            // Hand
             hasArmsEquip[0] = armsEquip[0];
             hasArmsEquipAnimators[0] = armsEquipAnimators[0];
 
-            // MK2
-            hasArmsEquip[1] = armsEquip[3];
-            hasArmsEquipAnimators[1] = armsEquipAnimators[3];
+            // M1 Garand
+            hasArmsEquip[1] = armsEquip[1];
+            hasArmsEquipAnimators[1] = armsEquipAnimators[1];
 
             // M18
-            hasArmsEquip[1] = armsEquip[3];
-            hasArmsEquipAnimators[1] = armsEquipAnimators[3];
-
-            // Morphine
             hasArmsEquip[2] = armsEquip[5];
             hasArmsEquipAnimators[2] = armsEquipAnimators[5];
 
-            // Bandage Roll
+            // Morphine
             hasArmsEquip[3] = armsEquip[6];
             hasArmsEquipAnimators[3] = armsEquipAnimators[6];
         }
         else
         {   // 의무병
-            // m3a1
-            hasArmsEquip[0] = armsEquip[2];
-            hasArmsEquipAnimators[0] = armsEquipAnimators[2];
+            // Hand
+            hasArmsEquip[0] = armsEquip[0];
+            hasArmsEquipAnimators[0] = armsEquipAnimators[0];
 
-            // MK2
+            // m3a1
             hasArmsEquip[1] = armsEquip[3];
             hasArmsEquipAnimators[1] = armsEquipAnimators[3];
 
             // M18
-            hasArmsEquip[1] = armsEquip[3];
-            hasArmsEquipAnimators[1] = armsEquipAnimators[3];
-
-            // Morphine
             hasArmsEquip[2] = armsEquip[5];
             hasArmsEquipAnimators[2] = armsEquipAnimators[5];
 
             // Bandage Roll
-            hasArmsEquip[3] = armsEquip[6];
-            hasArmsEquipAnimators[3] = armsEquipAnimators[6];
+            hasArmsEquip[3] = armsEquip[7];
+            hasArmsEquipAnimators[3] = armsEquipAnimators[7];
         }
     }
 

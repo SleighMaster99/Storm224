@@ -21,6 +21,7 @@ public enum FireType
 public abstract class Equip : MonoBehaviour
 {
     [Header("Equip Property")]
+    public PlayerControlable playerControlable;       // Player Controlable
     public string equipName;                // 장비이름
     public EquipType equipType;             // 장비 타입
     public bool isAiming;                   // 조준 상태
@@ -39,7 +40,12 @@ public abstract class Equip : MonoBehaviour
     public AudioSource audioSource;         // 오디오 소스
     public PlayerUI playerUI;               // Player UI Script
 
-    public abstract void Fire();
+    private void Awake()
+    {
+        playerControlable = this.transform.root.GetComponent<PlayerControlable>();
+    }
+
+    public abstract void Fire(bool isClose, RaycastHit hit);
     public abstract void Aiming();
     public abstract void Reload();
 }

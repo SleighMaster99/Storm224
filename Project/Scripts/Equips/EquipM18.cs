@@ -15,8 +15,6 @@ public class EquipM18 : Equip
 
     [Header("Grenade Property")]
     [SerializeField]
-    private int hasAmmo;                        // 가지고 있는 개수
-    [SerializeField]
     private float throwForce;                   // 던지는 힘
     [SerializeField]
     private float spawnWaitTime;                // 클릭 후 Prefab 스폰까지 기다리는 시간
@@ -24,6 +22,10 @@ public class EquipM18 : Equip
     private float explosionWaitTime;            // 코킹 후 폭발까지 시간
     [SerializeField]
     private float destroyTime;                  // 폭발 후 제거 시간
+    [SerializeField]
+    private string noAmmoMessage;               // 연막탄 없을 때 메세지
+    [SerializeField]
+    private float noAmmoMessageShowingTime;    // 연막탄 없을 때 메세지 보여주는 시간
 
     [Header("Sounds")]
     [SerializeField]
@@ -36,7 +38,15 @@ public class EquipM18 : Equip
     // 무기 장착
     private void OnEnable()
     {
+        if (reloadedAmmo <= 0)
+        {
+            playerControlable.Keyboard1();
+            playerUI.ShowEquipMessage(noAmmoMessage, noAmmoMessageShowingTime);
+            return;
+        }
+
         StartCoroutine("Equipping");
+        playerUI.InitializeEquipUI(equipName, ammo, reloadedAmmo);
     }
 
     // 무기 장착 중...
@@ -48,7 +58,7 @@ public class EquipM18 : Equip
     }
 
     // ThrowReady && Trow
-    public override void Fire()
+    public override void Fire(bool isClose, RaycastHit hit)
     {
         isClick = !isClick;
 
@@ -113,19 +123,42 @@ public class EquipM18 : Equip
         Vector3 throwPosition = grenadeSpawnPoint.transform.position;
         Vector3 throwDirection = Camera.main.transform.forward;
 
-        hasAmmo--;
+        reloadedAmmo--;
+        playerUI.UpdateEquipUI(ammo, reloadedAmmo);
 
         if (!grenade.isCocking)
             grenade.Cocking();
 
         grenade.transform.SetParent(null);
         grenade.Throw(throwPosition, throwDirection, throwForce);
+
+        StartCoroutine("ReloadGrenade");
+    }
+
+    // Grenade 투척 후 Ammo관련 UI 변경
+    private IEnumerator ReloadGrenade()
+    {
+        yield return new WaitForSeconds(1.0f);
+
+        grenade = null;
+
+        if (ammo > 0)
+        {
+            ammo--;
+            reloadedAmmo = maxReloadedAmmo;
+            playerUI.UpdateEquipUI(ammo, reloadedAmmo);
+        }
+        else
+        {
+            playerControlable.Keyboard1();
+            isShoot = false;
+        }
     }
 
     // 투척 장비가 있는지 확인
     private bool CheckHasAmmo()
     {
-        if (hasAmmo <= 0)
+        if (ammo <= 0)
             return true;
         else
             return false;

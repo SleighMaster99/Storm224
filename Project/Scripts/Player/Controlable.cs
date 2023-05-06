@@ -16,6 +16,7 @@ public abstract class Controlable : MonoBehaviour
     public abstract void KeyboardZ();
     public abstract void KeyboardR();
     public abstract void KeyboardTab();
+    public abstract void SpaceBar();
     public abstract void Keyboard1();
     public abstract void Keyboard2();
     public abstract void Keyboard3();

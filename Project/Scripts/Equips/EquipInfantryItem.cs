@@ -2,21 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EquipHeal : Equip
+public class EquipInfantryItem : Equip
 {
-    [Header("Heal Property")]
+    [Header("AmmoBox Property")]
     [SerializeField]
-    private float healWaitTime;                 // 힐 하는 시간
+    private GameObject ammoBoxPrefab;           // AmmoBox Prefab
     [SerializeField]
-    private float healAmount;                   // 힐 하는 양
+    private Transform ammoBoxSpawnPoint;        // AmmoBox 설치할 위치
     [SerializeField]
-    private string noAmmoMessage;               // 회복템 없을 때 메세지
+    private float waitTime;                     // 탄약통 배치 하는 시간
     [SerializeField]
-    private float noAmmoMessageShowingTime;     // 회복템 없을 때 메세지 보여주는 시간
+    private string noAmmoMessage;               // 탄약통 없을 때 메세지
+    [SerializeField]
+    private float noAmmoMessageShowingTime;     // 탄약통 없을 때 메세지 보여주는 시간
 
     [Header("Sounds")]
     [SerializeField]
-    private AudioClip useSound;                 // 회복 아이템 사용하는 소리
+    private AudioClip useSound;                 // AmmoBox 배치 하는 소리
 
     // 무기 장착
     private void OnEnable()
@@ -40,7 +42,7 @@ public class EquipHeal : Equip
         isShoot = CheckHasItem();
     }
 
-    // Heal
+    // 탄약통 설치
     public override void Fire(bool isClose, RaycastHit hit)
     {
         isClick = !isClick;
@@ -52,45 +54,45 @@ public class EquipHeal : Equip
             audioSource.PlayOneShot(useSound);
 
         if (isClick)
-            StartCoroutine("Heal");
+            StartCoroutine("InstallAmmoBox");
         else
         {
-            StopCoroutine("Heal");
+            StopCoroutine("InstallAmmoBox");
             audioSource.Stop();
         }
 
-        animator.SetBool("IsClick", isClick);
+        animator.SetBool("IsUse", isClick);
     }
 
-    // 힐 아이템 개수 줄이고 HP 회복
-    private IEnumerator Heal()
+    // AmmoBox 아이템 개수 줄이고 설치
+    private IEnumerator InstallAmmoBox()
     {
-        yield return new WaitForSeconds(healWaitTime);
+        yield return new WaitForSeconds(waitTime);
+
+        Instantiate(ammoBoxPrefab, ammoBoxSpawnPoint.position, ammoBoxSpawnPoint.rotation);
 
         reloadedAmmo--;
         playerUI.UpdateEquipUI(ammo, reloadedAmmo);
 
-        this.transform.root.GetComponent<Health>().Heal(healAmount);
-
-        StartCoroutine("ReloadHealItem");
+        StartCoroutine("ReloadAmmoBox");
     }
 
-    // Heal 아이템 사용 후 Ammo관련 UI 변경
-    private IEnumerator ReloadHealItem()
+    // AmmoBox 아이템 사용 후 Ammo관련 UI 변경
+    private IEnumerator ReloadAmmoBox()
     {
         yield return new WaitForSeconds(1.0f);
 
         while (isClick)
-            yield return null;
+            yield return null;      // 마우스 클릭 상태라면 대기
 
         if (ammo > 0)
-        {
+        {   // AmmoBox가 남아있을 때
             ammo--;
             reloadedAmmo = maxReloadedAmmo;
             playerUI.UpdateEquipUI(ammo, reloadedAmmo);
         }
         else
-        {
+        {   // AmmoBox가 없을 때
             playerControlable.Keyboard1();
         }
     }
@@ -105,7 +107,7 @@ public class EquipHeal : Equip
         return;
     }
 
-    // 회복 장비가 있는지 확인
+    // 장비가 있는지 확인
     private bool CheckHasItem()
     {
         if (ammo <= 0)

@@ -88,6 +88,12 @@ public class PlayerControl : Control
         controlTarget.KeyboardTab();
     }
 
+    // SpaceBar
+    void OnSpaceBar()
+    {
+        controlTarget.SpaceBar();
+    }
+
     // 1
     void OnKeyboard1()
     {
@@ -111,4 +117,5 @@ public class PlayerControl : Control
     {
         controlTarget.Keyboard4();
     }
+
 }

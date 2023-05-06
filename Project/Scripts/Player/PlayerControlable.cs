@@ -26,11 +26,15 @@ public class PlayerControlable : Controlable
     [SerializeField]
     private float runSpeed;                     // 달릴 때 속도
     [SerializeField]
-    private bool isMove = false;                // 움직임 여부
-    [SerializeField]
     private bool isRun = false;                 // 달리기 여부
     [SerializeField]
     private bool isLShiftDown = false;          // LShift 누름 여부
+    public bool isMove = false;                 // 움직임 여부
+    public float footSoundTerm;                 // 발소리 텀
+    [SerializeField]
+    private float walkTerm;
+    [SerializeField]
+    private float runTerm;
 
     [Header("Mouse Sensitive")]
     public float rotateXSpeed;                  // 마우스 가로 감도
@@ -43,6 +47,8 @@ public class PlayerControlable : Controlable
     private float rotateX;                      // 마우스 가로 움직임
     private float rotateY;                      // 마우스 세로 움직임
 
+    private bool isClick = false;                        // 마우스 Down Up
+
     [Header("Stand/Sit/Down")]
     [SerializeField]
     private CapsuleCollider capsuleCollider;
@@ -53,9 +59,16 @@ public class PlayerControlable : Controlable
     [SerializeField]
     private float sitHeight;                    // 앉아 있을 때 높이
     [SerializeField]
-    private float standsitCenter;                   // 앉거나 서 있을 때 중심
+    private float standsitCenter;               // 앉거나 서 있을 때 중심
     [SerializeField]
     private float downCenter;                   // 엎드려 있을 때 중심
+
+    [Header("Jump")]
+    [SerializeField]
+    private Rigidbody playerRigidbody;          // rigidbody
+    [SerializeField]
+    private float jumpPower;                    // 점프 AddForce 수치
+    public bool isJump;                         // 점프 중인지 True : 점프중, False : 땅에 있음
 
 
     // Player 상태 Stand/Sit/Down
@@ -104,7 +117,7 @@ public class PlayerControlable : Controlable
             isMove = false;
             isRun = false;
 
-            currentEquip.animator.SetBool("IsRun", isRun);
+            //currentEquip.animator.SetBool("IsRun", isRun);
         }
     }
 
@@ -122,13 +135,11 @@ public class PlayerControlable : Controlable
             if(bodyState.Equals(PlayerBodyStatus.Down))
                 rotateX = Mathf.Clamp(rotateX, -30.0f, 10.0f);
             else
-                rotateX = Mathf.Clamp(rotateX, -90.0f, 90.0f);
+                rotateX = Mathf.Clamp(rotateX, -70.0f, 50.0f);
 
             smoothRotation = Vector3.SmoothDamp(smoothRotation, new Vector3(rotateX, rotateY), ref currentVelocity, 0.1f);
 
-
             this.transform.eulerAngles = new Vector3(0, rotateY, 0);
-            // mainCamera.transform.eulerAngles = new Vector3(rotateX, rotateY, 0);
             mainCamera.transform.eulerAngles = smoothRotation;
         }
     }
@@ -155,10 +166,21 @@ public class PlayerControlable : Controlable
     // 좌클릭 - 발사
     public override void LMB()
     {
+        isClick = !isClick;
+
         if (isRun)
             return;
 
-        currentEquip.Fire();
+        RaycastHit hit;
+        bool isClose;
+        
+        Debug.DrawRay(mainCamera.position, mainCamera.forward * 1.9f, Color.red, 2.0f);
+        if (Physics.Raycast(mainCamera.position, mainCamera.forward, out hit, 1.9f))
+            isClose = true;
+        else
+            isClose = false;
+
+        currentEquip.Fire(isClose, hit);
     }
 
     // 우클릭 -조준
@@ -189,25 +211,15 @@ public class PlayerControlable : Controlable
         {
             isRun = true;
 
-            /*
-            if (bodyState.Equals(PlayerBodyStatus.Sit))
-                moveSpeed = runSpeed - decreaseMoveSpeed;
-            else
-                moveSpeed = runSpeed;
-            */
             moveSpeed = runSpeed;
+            footSoundTerm = runTerm;
         }
         else
         {
             isRun = false;
 
-            /*
-            if (bodyState.Equals(PlayerBodyStatus.Sit))
-                moveSpeed = walkSpeed - decreaseMoveSpeed;
-            else
-                moveSpeed = walkSpeed;
-            */
             moveSpeed = walkSpeed;
+            footSoundTerm = walkTerm;
         }
 
         currentEquip.animator.SetBool("IsRun", isRun);
@@ -288,27 +300,48 @@ public class PlayerControlable : Controlable
         isCursor = !isCursor;
     }
 
+    // 점프 - SpaceBar
+    public override void SpaceBar()
+    {
+        if(!isJump)
+            playerRigidbody.AddForce(this.transform.up * jumpPower);
+
+        isJump = true;
+    }
+
     // 장비 선택 - 1
     public override void Keyboard1()
     {
+        if (isClick)
+            return;
+
         currentEquip = equipManager.CurrentEquipChanger(1);
     }
 
     // 장비 선택 - 2
     public override void Keyboard2()
     {
+        if (isClick)
+            return;
+
         currentEquip = equipManager.CurrentEquipChanger(2);
     }
 
     // 장비 선택 - 3
     public override void Keyboard3()
     {
+        if (isClick)
+            return;
+
         currentEquip = equipManager.CurrentEquipChanger(3);
     }
 
     // 장비 선택 - 4
     public override void Keyboard4()
     {
+        if (isClick)
+            return;
+
         currentEquip = equipManager.CurrentEquipChanger(4);
     }
 

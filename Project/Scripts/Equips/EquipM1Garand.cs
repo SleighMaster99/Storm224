@@ -45,6 +45,8 @@ public class EquipM1Garand : Equip
     private float fireForce;                    // 총알 발사 힘
     [SerializeField]
     private float reloadTime;                   // 재장전 시간 - 애니메이션 재생 후 탄 처리
+    [SerializeField]
+    private Vector3 bulletHoleScale;            // 탄흔 Scale
 
     [Header("Cartridge Case Property")]
     [SerializeField]
@@ -54,22 +56,18 @@ public class EquipM1Garand : Equip
     [SerializeField]
     private float cartridgeCaseTime;            // 탄피 풀에 반납 되는 시간
 
-    // Pool
-    private ObjectPool<Bullet> bulletPool;
-    private ObjectPool<CartridgeCase> cartridgeCasePool;
-
     [Header("PlayerControlabe")]
-    [SerializeField]
-    private PlayerControlable playerControlable;
     [SerializeField]
     private float rotateXAmount;                // 조준 수평 감도 감소량
     [SerializeField]
     private float rotateYAmount;                // 조준 수직 감도 감소량
 
+    // 오브젝트 풀
+    private PoolManager poolManager;            // Pool Manager
+
     private void Awake()
     {
-        bulletPool = new ObjectPool<Bullet>(CreateBullet, OnGetBullet, OnReleaseBullet, OnDestroyBullet, maxSize: 20);
-        cartridgeCasePool = new ObjectPool<CartridgeCase>(CreateCartridgeCase, OnGetCartridgeCase, OnReleaseCartridgeCase, OnDestroyCartridgeCase, maxSize: 50);
+        poolManager = GameObject.Find("Pool Manager").GetComponent<PoolManager>();
     }
 
     private void OnEnable()
@@ -90,7 +88,7 @@ public class EquipM1Garand : Equip
     }
 
     // 발사
-    public override void Fire()
+    public override void Fire(bool isClose, RaycastHit hit)
     {
         isClick = !isClick;
 
@@ -113,9 +111,9 @@ public class EquipM1Garand : Equip
             playerUI.UpdateEquipUI(ammo, reloadedAmmo);
 
             // 총알 풀에서 가져오기
-            var bullet = bulletPool.Get();
+            var bullet = poolManager.bulletPool.Get();
             bullet.transform.position = bulletSpawnPoint.position;
-            bullet.FireBullet(bulletSpawnPoint.forward, fireForce, bulletDamage);
+            bullet.FireBullet(poolManager, bulletHoleScale, bulletSpawnPoint.forward, fireForce, bulletDamage);
 
             // 화염 효과
             StartCoroutine("MuzzleFlash");
@@ -153,7 +151,7 @@ public class EquipM1Garand : Equip
     {
         yield return new WaitForSeconds(cartridgeCaseWaitTime);
 
-        var cartridgeCase = cartridgeCasePool.Get();
+        var cartridgeCase = poolManager.cartridgeCasePool.Get();
         cartridgeCase.transform.position = cartridgeSpawnPoint.position;
         cartridgeCase.transform.eulerAngles = new Vector3(cartridgeSpawnPoint.eulerAngles.x - 90.0f,
                                                           cartridgeSpawnPoint.eulerAngles.y,
@@ -221,74 +219,5 @@ public class EquipM1Garand : Equip
             return true;
         else
             return false;
-    }
-
-
-    /// <summary>
-    /// Pool
-    /// </summary>
-    /// <returns></returns>
-    /// 
-
-    /*
-     * Bullet Pool
-     * 
-     * CreateBullet         총알 풀 생성
-     * OnGetBullet          풀에서 가져오기
-     * OnReleaseBullet      풀에 반납하기
-     * OnDestroyBullet      총알 풀에서 삭제하기
-     */
-    private Bullet CreateBullet()
-    {
-        Bullet bullet = Instantiate(bulletPrefab).GetComponent<Bullet>();
-        bullet.SetManagedPool(bulletPool);
-
-        return bullet;
-    }
-
-    private void OnGetBullet(Bullet bullet)
-    {
-        bullet.gameObject.SetActive(true);
-    }
-
-    private void OnReleaseBullet(Bullet bullet)
-    {
-        bullet.gameObject.SetActive(false);
-    }
-
-    private void OnDestroyBullet(Bullet bullet)
-    {
-        Destroy(bullet.gameObject);
-    }
-
-    /*
-     * CartridgeCase Pool
-     * 
-     * CreateCartridgeCase         탄피 풀 생성
-     * OnGetCartridgeCase          풀에서 가져오기
-     * OnReleaseCartridgeCase      풀에 반납하기
-     * OnDestroyCartridgeCase      탄피 풀에서 삭제하기
-     */
-    private CartridgeCase CreateCartridgeCase()
-    {
-        CartridgeCase cartridgeCase = Instantiate(cartridgeCasePrefab).GetComponent<CartridgeCase>();
-        cartridgeCase.SetManagedPool(cartridgeCasePool);
-
-        return cartridgeCase;
-    }
-
-    private void OnGetCartridgeCase(CartridgeCase cartridgeCase)
-    {
-        cartridgeCase.gameObject.SetActive(true);
-    }
-
-    private void OnReleaseCartridgeCase(CartridgeCase cartridgeCase)
-    {
-        cartridgeCase.gameObject.SetActive(false);
-    }
-
-    private void OnDestroyCartridgeCase(CartridgeCase cartridgeCase)
-    {
-        Destroy(cartridgeCase.gameObject);
     }
 }
