@@ -6,11 +6,20 @@ public class VehicleControlable : Controlable
 {
     // public Transform cameraSocket;              // 카메라 소켓
     //public Transform mainCamera;                // 플레이어 시점 카메라
+
+    public float Vehicle_Speed;
+
     
     public Transform[] characterSeat; // 좌석
     public Transform[] ridePosition; // 하차 위치
 
     Rigidbody rigidbody;
+
+    public AudioSource audioSource; // 차량 오디오 소스
+    public AudioClip[] audioClip; //효과음을 저장할 배열 변수 선언
+
+    public enum audio {Boarding,Moving, brake}; //오디오 타입 선언
+
 
     [SerializeField]
     private WheelCollider[] wheelColliders;
@@ -19,6 +28,8 @@ public class VehicleControlable : Controlable
 
     public PlayerControlable drivePlayer;
     public Transform currentSeat;
+
+
 
     // Update is called once per frame
     void Update()
@@ -76,10 +87,11 @@ public class VehicleControlable : Controlable
     }
     public void Break()
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < wheelMeshes.Length; i++)
         {
             wheelColliders[i].brakeTorque = 2000f / 2;
         }
+        PlaySound(audio.brake);
     }
     //차량 하차 
     private void GetOut()
@@ -100,6 +112,7 @@ public class VehicleControlable : Controlable
 
         controller.ChangeControlTarget(this,drivePlayer);
         drivePlayer = null;
+        audioSource.Stop(); //차량에서 내릴 때 사운드 종료
     }
 
 
@@ -125,39 +138,53 @@ public class VehicleControlable : Controlable
     //Vehicle 움직이기
     public override void Move(Vector2 input)
     {
-        for (int i = 0; i < 4; i++)
+        if (characterSeat[0] == currentSeat)
         {
+            for (int i = 0; i < wheelMeshes.Length; i++)
+            {
+
             Quaternion quat;
             Vector3 position;
             wheelColliders[i].GetWorldPose(out position, out quat);
             wheelMeshes[i].transform.SetPositionAndRotation(position, quat);
-        }
+             }
 
-        wheelColliders[0].steerAngle = wheelColliders[1].steerAngle = input.x * 20f;
+            wheelColliders[0].steerAngle = wheelColliders[1].steerAngle = input.x * 20f;
         
-        for (int i = 0; i < 4; i++)
-        {
-            wheelColliders[i].motorTorque = input.y * (2000f / 4);
-        }
-
-        if (input.y != 0)   // 전진 중이 아닐 때
-        {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < wheelMeshes.Length; i++)
             {
-                wheelColliders[i].brakeTorque = 0;
+                wheelColliders[i].motorTorque = input.y * (Vehicle_Speed / 4);
             }
-        }
-        if (characterSeat[1] == currentSeat)
-        {
+
+            if (input.y != 0)   // 전진 중일 때
+            {
+                 for (int i = 0; i < wheelMeshes.Length; i++)
+                 {
+                    wheelColliders[i].brakeTorque = 0;
+                 }
+                if (audioSource.GetComponent<AudioSource>().isPlaying) return; //현재 사운드를 플레이 중이면 사운드 더 진행하지 않기
+                else audioSource.GetComponent<AudioSource>().PlayOneShot(audioClip[1]); //플레이 중이 아니라면 1회만 플레이
+                PlaySound(audio.Moving);
+            }
 
         }
-        //else    // 키를 눌렀을 때
-        //{
-        //    for (int i = 0; i < 4; i++)
-        //    {
-        //        wheelColliders[i].brakeTorque = 0; // 브레이크 해제
-        //    }
-        //}
+
+    }
+    public void PlaySound(audio type) //효과음 플레이 함수
+    {
+        switch(type)
+        {
+            case audio.Boarding:
+                audioSource.clip = audioClip[0]; 
+                break;
+            case audio.Moving: //움직일때 audioClip의 0번째 사운드 재생
+                audioSource.clip = audioClip[1]; 
+                break;
+            case audio.brake:
+                audioSource.clip = audioClip[2];//브레이크를 할 때 audioClip의 1번째 사운드 재생
+                break;
+        }
+        audioSource.Play();
     }
 
     //차량 흔들림 방지
