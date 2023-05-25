@@ -9,16 +9,16 @@ public class TestUI : MonoBehaviour
 
     public void SelectArmyButton1()
     {
-        equipManager.TestInitializeEquip(1);
+        equipManager.SelectPosition(1);
     }
 
     public void SelectArmyButton2()
     {
-        equipManager.TestInitializeEquip(2);
+        equipManager.SelectPosition(2);
     }
 
     public void SelectArmyButton3()
     {
-        equipManager.TestInitializeEquip(3);
+        equipManager.SelectPosition(3);
     }
 }

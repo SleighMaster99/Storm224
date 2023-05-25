@@ -7,8 +7,28 @@ using TMPro;
 public class PlayerUI : MonoBehaviour
 {
     [Header("Components")]
-    [SerializeField]
     private Health playerHealth;
+    private Health vehicleHealth;
+    private VehicleControlable vehicleControlable;
+    private ArtilleryControlable artilleryControlable;
+
+    [Header("UI GameObject")]
+    [SerializeField]
+    private GameObject statusUI;
+    [SerializeField]
+    private GameObject equipUI;
+    [SerializeField]
+    private GameObject vehicleStatusUI;
+    [SerializeField]
+    private GameObject vehicleUI;
+    [SerializeField]
+    private GameObject artilleryBackground;
+    [SerializeField]
+    private GameObject artilleryStatusUI;
+    [SerializeField]
+    private GameObject artilleryUI;
+    [SerializeField]
+    private GameObject missionComplete;
 
     [Header("Equip Icons")]
     [SerializeField]
@@ -29,16 +49,32 @@ public class PlayerUI : MonoBehaviour
     [Header("Health")]
     [SerializeField]
     private Slider hpSlider;
-
-    [Header("Body Status")]
     [SerializeField]
-    private Image bodyStatusImage;
-    [SerializeField]
-    private Sprite[] bodyStatusIcons;
+    private GameObject bloodImage;
 
     [Header("Message")]
     [SerializeField]
     private TMP_Text equipMessageText;
+
+    [Header("Vehicle")]
+    [SerializeField]
+    private TMP_Text vehicleNameText;
+    [SerializeField]
+    private TMP_Text vehicleVelocityText;
+    [SerializeField]
+    private Slider fuelSlider;
+    [SerializeField]
+    private Slider vehicleHPSlider;
+    private bool isVehicle;
+
+    [Header("Artillery")]
+    [SerializeField]
+    private TMP_Text artilleryNameText;
+    [SerializeField]
+    private TMP_Text artilleryAmmoText;
+    [SerializeField]
+    private Image artilleryReloadImage;
+    private bool isArtillery;
 
     private void Awake()
     {
@@ -48,6 +84,16 @@ public class PlayerUI : MonoBehaviour
     private void Update()
     {
         hpSlider.value = playerHealth.HP;
+        if (isVehicle)
+        {
+            vehicleHPSlider.value = vehicleHealth.HP;
+            fuelSlider.value = vehicleControlable.fuel;
+            vehicleVelocityText.text = ((int)vehicleControlable.vehicleVelocity * 4).ToString();
+        }
+        if (playerHealth.HP <= 35.0f)
+            bloodImage.SetActive(true);
+        else
+            bloodImage.SetActive(false);
     }
 
     // 장비 장착시 UI 변경
@@ -55,7 +101,7 @@ public class PlayerUI : MonoBehaviour
     {
         switch (equipName)
         {
-            case "Hand":
+            case "손":
                 equipIcon.sprite = equipSpriteIcons[0];
                 aspect.aspectRatio = 1;
                 break;
@@ -79,11 +125,11 @@ public class PlayerUI : MonoBehaviour
                 equipIcon.sprite = equipSpriteIcons[5];
                 aspect.aspectRatio = 1;
                 break;
-            case "Morphine":
+            case "모르핀":
                 equipIcon.sprite = equipSpriteIcons[6];
                 aspect.aspectRatio = 1;
                 break;
-            case "Bandage":
+            case "붕대":
                 equipIcon.sprite = equipSpriteIcons[7];
                 aspect.aspectRatio = 1;
                 break;
@@ -91,8 +137,16 @@ public class PlayerUI : MonoBehaviour
                 equipIcon.sprite = equipSpriteIcons[8];
                 aspect.aspectRatio = 2;
                 break;
+            case "스패너":
+                equipIcon.sprite = equipSpriteIcons[9];
+                aspect.aspectRatio = 1;
+                break;
+            case "구급상자":
+                equipIcon.sprite = equipSpriteIcons[10];
+                aspect.aspectRatio = 2;
+                break;
         }
-
+        
         equipNameText.text = equipName;
         equipAmmoText.text = equipAmmo.ToString();
         equipReloadedAmmoText.text = equipReloadedAmmo.ToString();
@@ -103,23 +157,6 @@ public class PlayerUI : MonoBehaviour
     {
         equipAmmoText.text = equipAmmo.ToString();
         equipReloadedAmmoText.text = equipReloadedAmmo.ToString();
-    }
-
-    // 플레이어 상태 변화시 UI 변경
-    public void UpdateBodyStatusUI(int bodyStatus)
-    {
-        switch (bodyStatus)
-        {
-            case 0:
-                bodyStatusImage.sprite = bodyStatusIcons[0];
-                break;
-            case 1:
-                bodyStatusImage.sprite = bodyStatusIcons[1];
-                break;
-            case 2:
-                bodyStatusImage.sprite = bodyStatusIcons[2];
-                break;
-        }
     }
 
     // 텍스트 보여주기
@@ -138,5 +175,107 @@ public class PlayerUI : MonoBehaviour
         yield return new WaitForSeconds(showingTime);
 
         equipMessageText.gameObject.SetActive(false);
+    }
+
+    // 차량 승하차시 UI 변경
+    public void UpdateVehicleUI(bool isVehicle, VehicleControlable currentVehicleControlable, Health currentVehicleHealth)
+    {
+        this.isVehicle = isVehicle;
+
+        if (this.isVehicle)
+        {   // 차량 탑승
+            vehicleControlable = currentVehicleControlable;
+            vehicleHealth = currentVehicleHealth;
+
+            vehicleHPSlider.maxValue = vehicleHealth.maxHP;
+
+            vehicleNameText.text = currentVehicleControlable.vehicleName;
+
+            statusUI.SetActive(false);
+            equipUI.SetActive(false);
+            vehicleUI.SetActive(true);
+            vehicleStatusUI.SetActive(true);
+        }
+        else
+        {   // 차량 하차
+            vehicleControlable = null;
+            vehicleHealth = null;
+
+            vehicleNameText.text = null;
+
+            statusUI.SetActive(true);
+            equipUI.SetActive(true);
+            vehicleUI.SetActive(false);
+            vehicleStatusUI.SetActive(false);
+        }
+    }
+
+    // 야포 사용 UI 변경
+    public void UpdateArtilleryUI(bool isArtillery, ArtilleryControlable currentArtilleryControlable, Health currentArtilleryHealth)
+    {
+        this.isArtillery = isArtillery;
+
+        if (this.isArtillery)
+        {   // 야포 탑승
+            artilleryControlable = currentArtilleryControlable;
+
+            artilleryNameText.text = currentArtilleryControlable.artilleryName;
+            artilleryAmmoText.text = artilleryControlable.ammo.ToString();
+
+            statusUI.SetActive(false);
+            equipUI.SetActive(false);
+            artilleryBackground.SetActive(true);
+            artilleryUI.SetActive(true);
+            artilleryStatusUI.SetActive(true);
+        }
+        else
+        {   // 야포 하차
+            artilleryControlable = null;
+
+            artilleryNameText.text = null;
+
+            statusUI.SetActive(true);
+            equipUI.SetActive(true);
+            artilleryBackground.SetActive(false);
+            artilleryUI.SetActive(false);
+            artilleryStatusUI.SetActive(false);
+        }
+    }
+
+    // 야포 Ammo UI 변경
+    public void UpdateArtilleryAmmoUI(int ammo)
+    {
+        artilleryAmmoText.text = ammo.ToString();
+        artilleryReloadImage.fillAmount = 0;
+
+        StartCoroutine("ArtilleryReloadImage");
+    }
+
+    private IEnumerator ArtilleryReloadImage()
+    {
+        float timer = 0;
+
+        while(timer <= 5.0f)
+        {
+            timer += Time.deltaTime;
+            artilleryReloadImage.fillAmount += 0.2f * Time.deltaTime;
+
+            yield return null;
+        }
+    }
+
+    // 임무성공
+    public void MissionComplete()
+    {
+        StartCoroutine(ActiveMissionComplete());
+    }
+
+    private IEnumerator ActiveMissionComplete()
+    {
+        missionComplete.SetActive(true);
+
+        yield return new WaitForSeconds(2.0f);
+
+        missionComplete.SetActive(false);
     }
 }

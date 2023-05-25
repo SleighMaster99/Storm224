@@ -18,6 +18,11 @@ public class EquipHeal : Equip
     [SerializeField]
     private AudioClip useSound;                 // 회복 아이템 사용하는 소리
 
+    private void Awake()
+    {
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
+    }
+
     // 무기 장착
     private void OnEnable()
     {

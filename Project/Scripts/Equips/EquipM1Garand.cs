@@ -68,6 +68,7 @@ public class EquipM1Garand : Equip
     private void Awake()
     {
         poolManager = GameObject.Find("Pool Manager").GetComponent<PoolManager>();
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
     }
 
     private void OnEnable()
@@ -76,6 +77,9 @@ public class EquipM1Garand : Equip
         playerUI.InitializeEquipUI(equipName, ammo, reloadedAmmo);
 
         muzzleEffect.SetActive(false);
+
+        rotateXAmount = GameManager.optionUI.zoomX;
+        rotateYAmount = GameManager.optionUI.zoomY;
     }
 
     // 무기 장착 중...
@@ -112,8 +116,16 @@ public class EquipM1Garand : Equip
 
             // 총알 풀에서 가져오기
             var bullet = poolManager.bulletPool.Get();
-            bullet.transform.position = bulletSpawnPoint.position;
-            bullet.FireBullet(poolManager, bulletHoleScale, bulletSpawnPoint.forward, fireForce, bulletDamage);
+
+            if (!isClose)
+            {   // 총구가 오브젝트와 겹치지 않은 상태
+                bullet.transform.position = bulletSpawnPoint.position;
+                bullet.FireBullet(poolManager, bulletHoleScale, bulletSpawnPoint.forward, fireForce, bulletDamage);
+            }
+            else
+            {   // 총구가 오브젝트와 겹친 상태
+                bullet.transform.position = hit.point;
+            }
 
             // 화염 효과
             StartCoroutine("MuzzleFlash");

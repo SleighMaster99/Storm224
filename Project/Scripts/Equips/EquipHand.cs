@@ -17,6 +17,7 @@ public class EquipHand : Equip
     private void Awake()
     {
         mainCamera = Camera.main.transform;
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
     }
 
     private void OnEnable()
@@ -72,7 +73,10 @@ public class EquipHand : Equip
         if(Physics.Raycast(mainCamera.position, mainCamera.forward, out fistHit, fistDistance))
         {
             // Ray 맞았을 때 처리
-            Debug.Log(fistHit.transform.name);
+            if (fistHit.transform.CompareTag("enemy") || fistHit.transform.CompareTag("ally"))
+            {
+                fistHit.transform.GetComponent<AIHealth>().Damage(30.0f);
+            }
         }
 
         isShoot = !isShoot;

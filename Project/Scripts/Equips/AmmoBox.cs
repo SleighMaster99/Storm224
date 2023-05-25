@@ -9,6 +9,12 @@ public class AmmoBox : MonoBehaviour
     [SerializeField]
     private int ammo;
 
+    [Header("Sound Component")]
+    [SerializeField]
+    private AudioSource audioSource;
+    [SerializeField]
+    private AudioClip takeAmmoSound;
+
     void Start()
     {
         ammo = 5;
@@ -22,6 +28,8 @@ public class AmmoBox : MonoBehaviour
 
             if (ammo == 0)
                 bullets.SetActive(false);
+
+            audioSource.PlayOneShot(takeAmmoSound);
 
             return maxAmmo;
         }

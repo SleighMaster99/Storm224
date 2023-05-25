@@ -11,10 +11,9 @@ public class PlayerControl : Control
 
     public Transform mainCamera;
 
-
     void FixedUpdate()
     {
-        if (controlTarget.isCursor)
+        if (GameManager.isPause)
             return;
 
         controlTarget.Move(inputMoveVector);
@@ -43,7 +42,7 @@ public class PlayerControl : Control
     // 마우스 좌클릭
     void OnLMB()
     {
-        if (controlTarget.isCursor)
+        if (GameManager.isPause)
             return;
 
         controlTarget.LMB();
@@ -52,7 +51,7 @@ public class PlayerControl : Control
     // 마우스 우클릭
     void OnRMB()
     {
-        if (controlTarget.isCursor)
+        if (GameManager.isPause)
             return;
 
         controlTarget.RMB();
@@ -61,61 +60,96 @@ public class PlayerControl : Control
     // LShift
     void OnLShift()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.LShift();
     }
 
     // C
     void OnKeyboardC()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.KeyboardC();
     }
 
     // Z
     void OnKeyboardZ()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.KeyboardZ();
     }
 
     // R
     void OnKeyboardR()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.KeyboardR();
     }
 
     // Tab
-    void OnKeyboardTab()
+    void OnKeyboardESC()
     {
-        controlTarget.KeyboardTab();
+        controlTarget.KeyboardESC();
     }
 
     // SpaceBar
     void OnSpaceBar()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.SpaceBar();
     }
 
     // 1
     void OnKeyboard1()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.Keyboard1();
     }
 
     // 2
     void OnKeyboard2()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.Keyboard2();
     }
 
     // 3
     void OnKeyboard3()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.Keyboard3();
     }
 
     // 4
     void OnKeyboard4()
     {
+        if (GameManager.isPause)
+            return;
+
         controlTarget.Keyboard4();
     }
 
+    // 5
+    void OnKeyboard5()
+    {
+        if (GameManager.isPause)
+            return;
+
+        controlTarget.Keyboard5();
+    }
 }

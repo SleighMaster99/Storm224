@@ -8,16 +8,19 @@ public class PlayerControlable : Controlable
     [Header("Components")]
     [SerializeField]
     private PlayerUI playerUI;                  // Player UI Script
+    [SerializeField]
+    private GameManager gameManager;
+    [SerializeField]
+    private Health health;
+    [SerializeField]
+    private AudioListener audioListener;
 
     // 현재 장착 장비
     [Header("Weapon")]
     public EquipManager equipManager;
     public Equip currentEquip;
 
-    public Transform cameraSocket;              // 카메라소켓
-    public Transform mainCamera;                // 메인 카메라
-
-    public Text showTitleText;
+    //public Text showTitleText;
 
     [Header("Speed Property")]
     public float moveSpeed;                     // Player 현재 움직임 속도
@@ -69,6 +72,7 @@ public class PlayerControlable : Controlable
     [SerializeField]
     private float jumpPower;                    // 점프 AddForce 수치
     public bool isJump;                         // 점프 중인지 True : 점프중, False : 땅에 있음
+    private bool isSpaceBar;
 
 
     // Player 상태 Stand/Sit/Down
@@ -87,16 +91,36 @@ public class PlayerControlable : Controlable
         moveSpeed = walkSpeed;
 
         rotateX = 0;
-        rotateY = 0;
+        rotateY = this.transform.eulerAngles.y;
 
+        GameManager.optionUI.SensitiveInitalize();
+    }
+
+    // 플레이어 보직 선택 후 무기 초기화
+    public void PlayerInitialize()
+    {
         currentEquip = equipManager.InitializeCurrentEquip();
-        playerUI.UpdateBodyStatusUI((int)bodyState);
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
     private void LateUpdate()
     {
         // 앉기, 서기 기능
         SitDownStandUp();
+
+        if (health.HP <= 0)
+        {
+            gameManager.GameOver();
+            StartCoroutine(PlayerDie());
+        }
+    }
+
+    private IEnumerator PlayerDie()
+    {
+        yield return new WaitForSeconds(1.0f);
+
+        audioListener.enabled = false;
     }
 
     // Player 움직임 - WASD
@@ -117,7 +141,7 @@ public class PlayerControlable : Controlable
             isMove = false;
             isRun = false;
 
-            //currentEquip.animator.SetBool("IsRun", isRun);
+            currentEquip.animator.SetBool("IsRun", isRun);
         }
     }
 
@@ -149,18 +173,146 @@ public class PlayerControlable : Controlable
     {
         RaycastHit hit;
 
-        if (Physics.Raycast(mainCamera.transform.position, mainCamera.forward, out hit, 30.0f))
+        Debug.DrawRay(mainCamera.position, mainCamera.forward * 2.0f, Color.red, 1.0f);
+        if (Physics.Raycast(mainCamera.position, mainCamera.forward, out hit, 2.0f))
         {
-            showTitleText.text = hit.transform.gameObject.name;
-            if (hit.transform.name.Equals("Rifle_HP"))
+            if (hit.transform.CompareTag("AmmoBox"))
+                InteractAmmoBox(hit);
+            else if (hit.transform.CompareTag("Vehicle"))
+                InteractVehicle(hit);
+
+            switch (hit.transform.tag)
             {
-                Destroy(hit.transform.gameObject);
+                case "AmmoBox":
+                    InteractAmmoBox(hit);
+                    break;
+                case "Vehicle":
+                    InteractVehicle(hit);
+                    break;
+                case "BridgeBomber":
+                    InteractBomber(hit);
+                    break;
+                case "BridgeBomb":
+                    InteractInstallBomb(hit);
+                    break;
+                case "Artillery":
+                    InteractArtillery(hit);
+                    break;
+                default:
+                    break;
             }
         }
-        else
-            showTitleText.text = null;
+    }
 
-        Debug.DrawLine(mainCamera.transform.position, mainCamera.forward * 30.0f, Color.red, 1.0f);
+    // 상호작용 - 탄약통
+    private void InteractAmmoBox(RaycastHit hit)
+    {
+        if (currentEquip.equipType == EquipType.Gun)
+        {
+            if (currentEquip.ammo != currentEquip.maxAmmo)
+            {
+                currentEquip.ammo = hit.transform.GetComponent<AmmoBox>().AddAmmo(currentEquip.maxAmmo);
+                playerUI.UpdateEquipUI(currentEquip.ammo, currentEquip.reloadedAmmo);
+            }
+            else
+                playerUI.ShowEquipMessage("더 이상 탄약을 챙길 수 없습니다.", 1.0f);
+        }
+        else
+            playerUI.ShowEquipMessage("탄약이 필요한 장비가 아닙니다.", 1.0f);
+    }
+
+    // 상호작용 - 이동수단
+    private void InteractVehicle(RaycastHit hit)
+    {
+        VehicleControlable vehicle = hit.transform.GetComponent<VehicleControlable>();
+        Health vehicleHealth = hit.transform.GetComponent<Health>();
+
+        currentEquip.gameObject.SetActive(false);
+
+        Ride(vehicle);
+        playerUI.UpdateVehicleUI(true, vehicle, vehicleHealth);
+    }
+
+    // 이동수단 탑승 기능
+    private void Ride(VehicleControlable vehicle)
+    {
+        var controller = FindObjectOfType<Control>();
+        var playerBody = GetComponent<Rigidbody>();
+        var playerCollider = GetComponent<CapsuleCollider>();
+        playerBody.isKinematic = true;
+        playerCollider.isTrigger = true;
+
+        Transform closeSeat = vehicle.characterSeat[0];
+        float seatDistance = Vector3.Distance(this.transform.position, closeSeat.position);
+
+        foreach (Transform seat in vehicle.characterSeat)
+        {
+            float newSeatDistance = Vector3.Distance(this.transform.position, seat.position);
+
+            if (seatDistance > newSeatDistance)
+                closeSeat = seat;
+        }
+
+        this.transform.position = closeSeat.position;
+        vehicle.currentSeat = closeSeat;
+
+        vehicle.drivePlayer = this;
+        controller.ChangeControlTarget(vehicle);
+        vehicle.cameraSocket = this.cameraSocket;
+        vehicle.mainCamera = this.mainCamera;
+        transform.SetParent(vehicle.currentSeat);
+
+        if (vehicle.currentSeat == vehicle.characterSeat[0])
+            vehicle.Keyboard1();
+    }
+
+    // 상호작용 - 폭파
+    private void InteractBomber(RaycastHit hit)
+    {
+        BridgeBomb bomber = GameObject.FindWithTag("BridgeBomber").GetComponent<BridgeBomb>();
+
+        bomber.ActiveBomber();
+    }
+
+    // 상호작용 - 폭탄설치
+    private void InteractInstallBomb(RaycastHit hit)
+    {
+        BridgeBomb bomb = GameObject.FindWithTag("BridgeBomber").GetComponent<BridgeBomb>();
+
+        bomb.InstallBomb(hit.transform.position);
+    }
+
+
+    // 상호작용 - 야포
+    private void InteractArtillery(RaycastHit hit)
+    {
+        var artillery = hit.transform.GetComponent<ArtilleryControlable>();
+        var artilleryHealth = hit.transform.GetComponent<Health>();
+
+        currentEquip.gameObject.SetActive(false);
+
+        UseArtillery(artillery);
+        playerUI.UpdateArtilleryUI(true, artillery, artilleryHealth);
+    }
+
+    private void UseArtillery(ArtilleryControlable artillery)
+    {
+        var controller = FindObjectOfType<Control>();
+        var playerBody = GetComponent<Rigidbody>();
+        var playerCollider = GetComponent<CapsuleCollider>();
+
+        playerBody.isKinematic = true;
+        playerCollider.isTrigger = true;
+
+        this.transform.position = artillery.characterSeat.position;
+        this.transform.rotation = artillery.characterSeat.rotation;
+        mainCamera.rotation = artillery.characterSeat.rotation;
+
+        artillery.drivePlayer = this;
+        controller.ChangeControlTarget(artillery);
+        artillery.cameraSocket = this.cameraSocket;
+        artillery.mainCamera = this.mainCamera;
+        transform.SetParent(artillery.characterSeat);
     }
 
     // 좌클릭 - 발사
@@ -223,7 +375,6 @@ public class PlayerControlable : Controlable
         }
 
         currentEquip.animator.SetBool("IsRun", isRun);
-        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     // 앉기 - C
@@ -245,8 +396,6 @@ public class PlayerControlable : Controlable
             bodyState = PlayerBodyStatus.Stand;
             moveSpeed += decreaseMoveSpeed;
         }
-
-        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     // 엎드리기 - Z
@@ -270,8 +419,6 @@ public class PlayerControlable : Controlable
             capsuleCollider.center = new Vector3(0, standsitCenter, 0);
             this.transform.position += new Vector3(0, 0.2f, 0);
         }
-
-        playerUI.UpdateBodyStatusUI((int)bodyState);
     }
 
     // 재장전 - R
@@ -284,29 +431,23 @@ public class PlayerControlable : Controlable
     }
 
     // 커서 On/off - Tab
-    public override void KeyboardTab()
+    public override void KeyboardESC()
     {
-        if (isCursor)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-
-        isCursor = !isCursor;
+        gameManager.PauseGame(!GameManager.isPause);
     }
 
     // 점프 - SpaceBar
     public override void SpaceBar()
     {
-        if(!isJump)
-            playerRigidbody.AddForce(this.transform.up * jumpPower);
+        isSpaceBar = !isSpaceBar;
 
-        isJump = true;
+        if (isSpaceBar)
+        {
+            if (!isJump)
+                playerRigidbody.AddForce(this.transform.up * jumpPower);
+
+            isJump = true;
+        }
     }
 
     // 장비 선택 - 1
@@ -314,6 +455,9 @@ public class PlayerControlable : Controlable
     {
         if (isClick)
             return;
+
+        if (currentEquip.isAiming)
+            currentEquip.Aiming();
 
         currentEquip = equipManager.CurrentEquipChanger(1);
     }
@@ -324,6 +468,9 @@ public class PlayerControlable : Controlable
         if (isClick)
             return;
 
+        if (currentEquip.isAiming)
+            currentEquip.Aiming();
+
         currentEquip = equipManager.CurrentEquipChanger(2);
     }
 
@@ -332,6 +479,9 @@ public class PlayerControlable : Controlable
     {
         if (isClick)
             return;
+
+        if (currentEquip.isAiming)
+            currentEquip.Aiming();
 
         currentEquip = equipManager.CurrentEquipChanger(3);
     }
@@ -342,7 +492,22 @@ public class PlayerControlable : Controlable
         if (isClick)
             return;
 
+        if (currentEquip.isAiming)
+            currentEquip.Aiming();
+
         currentEquip = equipManager.CurrentEquipChanger(4);
+    }
+
+    // 장비 선택 - 5
+    public override void Keyboard5()
+    {
+        if (isClick)
+            return;
+
+        if (currentEquip.isAiming)
+            currentEquip.Aiming();
+
+        currentEquip = equipManager.CurrentEquipChanger(5);
     }
 
     // 앉기, 서기 기능

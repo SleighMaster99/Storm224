@@ -5,8 +5,7 @@ using UnityEngine;
 public class Health : MonoBehaviour
 {
     [Header("Health Property")]
-    [SerializeField]
-    private float maxHP;            // 최대 체력
+    public float maxHP;            // 최대 체력
     [SerializeField]
     private float initHP;           // 초기화 체력
     public float HP;               // 체력

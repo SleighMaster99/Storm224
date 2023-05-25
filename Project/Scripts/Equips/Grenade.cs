@@ -13,6 +13,8 @@ public class Grenade : MonoBehaviour
     private GameObject grenadeBody;             // 투척류 Mesh
     [SerializeField]
     private GameObject explosionEffect;         // 폭발 효과(Particle)
+    [SerializeField]
+    private float damage;                       // 데미지
 
     private float grenadeEffectForce;           // 투척 폭발 힘
     private float grenadeEffectUpperForce;      // 투척 폭발 위쪽 힘
@@ -82,6 +84,18 @@ public class Grenade : MonoBehaviour
             // 중력에 영향을 받는 오브젝트 날리기
             if (rigidbody != null)
                 rigidbody.AddExplosionForce(grenadeEffectForce, this.transform.position, grenadeEffectRadius, grenadeEffectUpperForce);
+
+            if (hit.transform.CompareTag("enemy") || hit.transform.CompareTag("ally"))
+            {   // 적일 때 피 파티클 및 데미지 처리
+                AIHealth aihealth = hit.transform.GetComponent<AIHealth>();
+                if (aihealth != null)
+                    aihealth.Damage(damage);
+            }
+            else if (hit.transform.CompareTag("Vehicle") || hit.transform.CompareTag("Player"))
+            {   // 차량일 때 데미지 처리
+                Health health = hit.transform.GetComponent<Health>();
+                health.Damage(damage);
+            }
         }
 
         StartCoroutine("DestroyGrenade");

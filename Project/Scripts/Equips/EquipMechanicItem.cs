@@ -19,6 +19,11 @@ public class EquipMechanicItem : Equip
     [SerializeField]
     private AudioClip repairSound;                     // 수리 하는 소리
 
+    private void Awake()
+    {
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
+    }
+
     // 무기 장착
     private void OnEnable()
     {
@@ -46,8 +51,8 @@ public class EquipMechanicItem : Equip
             {
                 if (hit.transform.CompareTag("Vehicle"))
                 {   // 추후 차량 스크립트의 리페어 타임으로 변경
-                    repairTime = 10.0f;
-                    //repairTime = hit.transform.GetComponent<Vehicle>().repairTime;
+                    //repairTime = 10.0f;
+                    repairTime = hit.transform.GetComponent<VehicleControlable>().vehicleRepairTime;
                     StartCoroutine("Repair");
                     StartCoroutine("RepairingTimer");
                 }

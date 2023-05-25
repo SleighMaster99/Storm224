@@ -20,6 +20,11 @@ public class EquipInfantryItem : Equip
     [SerializeField]
     private AudioClip useSound;                 // AmmoBox 배치 하는 소리
 
+    private void Awake()
+    {
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
+    }
+
     // 무기 장착
     private void OnEnable()
     {

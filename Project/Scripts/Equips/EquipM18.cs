@@ -35,6 +35,11 @@ public class EquipM18 : Equip
 
     private M18 grenade;                        // 스폰된 Grenade Script
 
+    private void Awake()
+    {
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
+    }
+
     // 무기 장착
     private void OnEnable()
     {

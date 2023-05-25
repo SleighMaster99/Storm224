@@ -43,7 +43,7 @@ public class EquipManager : MonoBehaviour
     }
 
     // 테스트씬 장비 장착
-    public void TestInitializeEquip(int num)
+    public void SelectPosition(int num)
     {
         if(num == 1)
         {   // 보병
@@ -62,9 +62,13 @@ public class EquipManager : MonoBehaviour
             // Morphine
             hasArmsEquip[3] = armsEquip[6];
             hasArmsEquipAnimators[3] = armsEquipAnimators[6];
+
+            // 탄약통
+            hasArmsEquip[4] = armsEquip[8];
+            hasArmsEquipAnimators[4] = armsEquipAnimators[8];
         }
         else if (num == 2)
-        {   // 공병
+        {   // 정비병
             // Hand
             hasArmsEquip[0] = armsEquip[0];
             hasArmsEquipAnimators[0] = armsEquipAnimators[0];
@@ -80,6 +84,10 @@ public class EquipManager : MonoBehaviour
             // Morphine
             hasArmsEquip[3] = armsEquip[6];
             hasArmsEquipAnimators[3] = armsEquipAnimators[6];
+
+            // 스패너
+            hasArmsEquip[4] = armsEquip[9];
+            hasArmsEquipAnimators[4] = armsEquipAnimators[9];
         }
         else
         {   // 의무병
@@ -98,6 +106,10 @@ public class EquipManager : MonoBehaviour
             // Bandage Roll
             hasArmsEquip[3] = armsEquip[7];
             hasArmsEquipAnimators[3] = armsEquipAnimators[7];
+
+            // 구급상자
+            hasArmsEquip[4] = armsEquip[10];
+            hasArmsEquipAnimators[4] = armsEquipAnimators[10];
         }
     }
 

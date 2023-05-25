@@ -31,7 +31,7 @@ public class PlayerFoot : MonoBehaviour
     {
         while (true)
         {
-            if (playerControlable.isMove)
+            if (playerControlable.isMove && !playerControlable.isJump)
             {
                 foot.SetActive(true);
 

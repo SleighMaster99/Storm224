@@ -67,6 +67,7 @@ public class EquipArisaka38 : Equip
     private void Awake()
     {
         poolManager = GameObject.Find("Pool Manager").GetComponent<PoolManager>();
+        playerUI = GameObject.Find("PlayerUI").GetComponent<PlayerUI>();
     }
 
     private void OnEnable()
@@ -75,6 +76,9 @@ public class EquipArisaka38 : Equip
         playerUI.InitializeEquipUI(equipName, ammo, reloadedAmmo);
 
         StartCoroutine("Equipping");
+
+        rotateXAmount = GameManager.optionUI.zoomX;
+        rotateYAmount = GameManager.optionUI.zoomY;
     }
 
     // 무기 장착 중...
